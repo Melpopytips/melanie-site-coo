@@ -55,6 +55,8 @@ export const ContactForm = () => {
           }
         ]);
 
+        console.log("DEBUG insert:", { inserted, supabaseError });
+        
         if (supabaseError) {
             console.error("❌ Erreur Supabase :", supabaseError.message);
         } else {
