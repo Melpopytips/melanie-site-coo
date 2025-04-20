@@ -1,8 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import fetch from 'node-fetch'; // obligatoire si pas déjà présent
+const express = require('express');
+const cors = require('cors');
+const nodemailer = require('nodemailer');
+const dotenv = require('dotenv');
+const fetch = require('node-fetch'); // fonctionne en CommonJS
 
 dotenv.config();
 
@@ -20,20 +20,18 @@ const verifyRecaptcha = async (token) => {
 
   const data = await res.json();
   console.log("🔍 Vérification reCAPTCHA :", data);
-  return data.success && data.score >= 0.5; // ajustable selon seuil
+  return data.success && data.score >= 0.5;
 };
 
 app.post('/send', async (req, res) => {
   const { name, email, message, company = '', phone = '', captchaToken } = req.body;
 
-  // 1️⃣ Vérification reCAPTCHA
   const isHuman = await verifyRecaptcha(captchaToken);
   if (!isHuman) {
     console.warn("⛔ reCAPTCHA non valide");
     return res.status(403).json({ error: "Échec de vérification reCAPTCHA" });
   }
 
-  // 2️⃣ Configuration de l’envoi d’e-mail
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
