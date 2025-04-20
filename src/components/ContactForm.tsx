@@ -65,7 +65,7 @@ export const ContactForm = () => {
         if (supabaseError) {
           console.error("❌ Erreur Supabase :", supabaseError.message);
         } else {
-          console.log("✅ Contact ajouté avec succès dans Supabase", inserted);
+          console.log("✅ Contact ajouté avec succès dans Supabase", data);
         }
       } catch (error) {
         console.error("❌ Erreur d’appel Supabase :", error);
