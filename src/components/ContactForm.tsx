@@ -45,11 +45,12 @@ export const ContactForm = () => {
           ...data,
           captchaToken,
         }),
+    });
 
+    if (!response.ok) {
+      throw new Error("Échec de l'envoi du message");
+    }
 
-      if (!response.ok) {
-        throw new Error("Échec de l'envoi du message");
-      }
 
       try {
         const { error: supabaseError, data: inserted } = await supabase.from('CONTACTS').insert([
