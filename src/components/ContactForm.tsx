@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_ANON_KEY!
+);
 
 interface FormData {
   name: string;
@@ -14,7 +20,7 @@ export const ContactForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const {
     register,
     handleSubmit,
@@ -25,8 +31,9 @@ export const ContactForm = () => {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     setError(null);
-  
+
     try {
+      // Envoi du mail
       const response = await fetch("https://mail-server-melanie.onrender.com/send", {
         method: 'POST',
         headers: {
@@ -34,14 +41,30 @@ export const ContactForm = () => {
         },
         body: JSON.stringify(data),
       });
-  
+
       if (!response.ok) {
-        throw new Error('Échec de l\'envoi du message');
+        throw new Error("Échec de l'envoi du message");
       }
-  
+
+      // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
+      try {
+        await supabase.from('contacts').insert({
+          nom_contact: data.name.split(' ')[0] || '',             // prénom estimé
+          prenom_contact: data.name.split(' ').slice(1).join(' '), // nom estimé
+          email_contact: data.email,
+          telephone_contact: data.phone || null,
+          company_contact: data.company || null,
+          message_contact: data.message,
+          lecture_message_contact: false, // non lu par défaut
+         });
+
+      } catch (supabaseError) {
+        console.error('Erreur Supabase :', supabaseError);
+      }
+
       setIsSubmitted(true);
       reset();
-  
+
       setTimeout(() => {
         setIsSubmitted(false);
       }, 5000);
@@ -51,10 +74,9 @@ export const ContactForm = () => {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
-    <motion.div 
+    <motion.div
       className="bg-white rounded-lg shadow-lg p-8 mb-8"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -69,9 +91,7 @@ export const ContactForm = () => {
         >
           <div className="text-5xl mb-4">✓</div>
           <h3 className="text-2xl font-bold text-secondary-700 mb-2">Merci pour votre message!</h3>
-          <p className="text-gray-600">
-            Je vous recontacterai très rapidement.
-          </p>
+          <p className="text-gray-600">Je vous recontacterai très rapidement.</p>
         </motion.div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -82,15 +102,11 @@ export const ContactForm = () => {
             <input
               type="text"
               id="name"
-              className={`w-full px-4 py-3 rounded-md border ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
-              } focus:outline-none focus:ring-2 focus:ring-primary-500`}
+              className={`w-full px-4 py-3 rounded-md border ${errors.name ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary-500`}
               {...register('name', { required: 'Ce champ est requis' })}
               disabled={isSubmitting}
             />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
           </div>
 
           <div className="mb-6">
@@ -113,9 +129,7 @@ export const ContactForm = () => {
             <input
               type="email"
               id="email"
-              className={`w-full px-4 py-3 rounded-md border ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
-              } focus:outline-none focus:ring-2 focus:ring-primary-500`}
+              className={`w-full px-4 py-3 rounded-md border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary-500`}
               {...register('email', {
                 required: 'Ce champ est requis',
                 pattern: {
@@ -125,9 +139,7 @@ export const ContactForm = () => {
               })}
               disabled={isSubmitting}
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
 
           <div className="mb-6">
@@ -150,15 +162,11 @@ export const ContactForm = () => {
             <textarea
               id="message"
               rows={5}
-              className={`w-full px-4 py-3 rounded-md border ${
-                errors.message ? 'border-red-500' : 'border-gray-300'
-              } focus:outline-none focus:ring-2 focus:ring-primary-500`}
+              className={`w-full px-4 py-3 rounded-md border ${errors.message ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary-500`}
               {...register('message', { required: 'Ce champ est requis' })}
               disabled={isSubmitting}
             ></textarea>
-            {errors.message && (
-              <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>
-            )}
+            {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>}
           </div>
 
           {error && (
@@ -170,9 +178,7 @@ export const ContactForm = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`bg-primary-500 text-white py-3 px-6 rounded-md font-medium 
-              ${isSubmitting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-primary-600'} 
-              transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
+            className={`bg-primary-500 text-white py-3 px-6 rounded-md font-medium ${isSubmitting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-primary-600'} transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
           >
             {isSubmitting ? 'Envoi en cours...' : 'Envoyer'}
           </button>
