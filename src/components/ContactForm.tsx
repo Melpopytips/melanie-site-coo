@@ -44,14 +44,14 @@ export const ContactForm = () => {
         body: JSON.stringify({
           ...data,
           captchaToken,
-        }),
-    });
+        })
+      });
 
-    if (!response.ok) {
-      throw new Error("Échec de l'envoi du message");
-    }
+      if (!response.ok) {
+        throw new Error("Échec de l'envoi du message");
+      }
 
-
+      // Insertion dans Supabase (non bloquante)
       try {
         const { error: supabaseError, data: inserted } = await supabase.from('CONTACTS').insert([
           {
@@ -65,11 +65,10 @@ export const ContactForm = () => {
           }
         ]);
 
-        console.log("DEBUG insert:", { inserted, supabaseError });
         if (supabaseError) {
           console.error("❌ Erreur Supabase :", supabaseError.message);
         } else {
-          console.log("✅ Contact ajouté avec succès dans Supabase", data);
+          console.log("✅ Contact ajouté avec succès dans Supabase", inserted);
         }
       } catch (error) {
         console.error("❌ Erreur d’appel Supabase :", error);
@@ -77,9 +76,7 @@ export const ContactForm = () => {
 
       setIsSubmitted(true);
       reset();
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 5000);
+      setTimeout(() => setIsSubmitted(false), 5000);
     } catch (err) {
       setError("Une erreur est survenue lors de l'envoi du message. Veuillez réessayer.");
     } finally {
