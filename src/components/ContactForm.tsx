@@ -41,8 +41,11 @@ export const ContactForm = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
-      });
+        body: JSON.stringify({
+          ...data,
+          captchaToken,
+        }),
+
 
       if (!response.ok) {
         throw new Error("Échec de l'envoi du message");
