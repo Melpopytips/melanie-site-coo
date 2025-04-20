@@ -49,7 +49,7 @@ export const ContactForm = () => {
       // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
       try {
         console.log('Tentative d\'insertion dans Supabase…', data);
-        await supabase.from('contacts').insert({
+        await supabase.from('CONTACTS').insert({
           nom_contact: data.name.split(' ')[0] || '',
           prenom_contact: data.name.split(' ').slice(1).join(' '),
           email_contact: data.email,
