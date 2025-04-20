@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabaseClient'; // ✅ On utilise le client partagé
+import ReCAPTCHA from 'react-google-recaptcha';
+import { supabase } from '../lib/supabaseClient';
 
 interface FormData {
   name: string;
@@ -15,6 +16,7 @@ export const ContactForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const {
     register,
@@ -27,8 +29,13 @@ export const ContactForm = () => {
     setIsSubmitting(true);
     setError(null);
 
+    if (!captchaToken) {
+      setError("Veuillez valider le reCAPTCHA avant d'envoyer.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      // Envoi du mail
       const response = await fetch("https://mail-server-melanie.onrender.com/send", {
         method: 'POST',
         headers: {
@@ -41,12 +48,11 @@ export const ContactForm = () => {
         throw new Error("Échec de l'envoi du message");
       }
 
-      // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
       try {
         const { error: supabaseError, data: inserted } = await supabase.from('CONTACTS').insert([
           {
             nom_contact: data.name,
-            prenom_contact: '', // si besoin, ou à séparer plus tard
+            prenom_contact: '',
             email_contact: data.email,
             telephone_contact: data.phone || null,
             company_contact: data.company || null,
@@ -56,11 +62,10 @@ export const ContactForm = () => {
         ]);
 
         console.log("DEBUG insert:", { inserted, supabaseError });
-        
         if (supabaseError) {
-            console.error("❌ Erreur Supabase :", supabaseError.message);
+          console.error("❌ Erreur Supabase :", supabaseError.message);
         } else {
-            console.log("✅ Contact ajouté avec succès dans Supabase", inserted);
+          console.log("✅ Contact ajouté avec succès dans Supabase", inserted);
         }
       } catch (error) {
         console.error("❌ Erreur d’appel Supabase :", error);
@@ -68,7 +73,6 @@ export const ContactForm = () => {
 
       setIsSubmitted(true);
       reset();
-
       setTimeout(() => {
         setIsSubmitted(false);
       }, 5000);
@@ -172,6 +176,13 @@ export const ContactForm = () => {
             ></textarea>
             {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>}
           </div>
+
+          <ReCAPTCHA
+            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY!}
+            size="invisible"
+            badge="bottomright"
+            onChange={(token) => setCaptchaToken(token)}
+          />
 
           {error && (
             <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-md">
