@@ -9,23 +9,23 @@ import { CallToAction } from '../components/CallToAction';
 export const HomePage = () => {
   const stats = [
     { icon: '📈', value: '+50%', label: 'Augmentation moyenne de la productivité' },
-    { icon: '⏱️', value: '15+', label: 'Années d\'expérience opérationnelle' },
+    { icon: '⏱️', value: '15+', label: "Années d'expérience opérationnelle" },
     { icon: '👥', value: '100%', label: 'Satisfaction des collaborateurs' },
     { icon: '⚙️', value: '50+', label: 'Processus optimisés' },
   ];
 
   const expertiseAreas = [
     {
-      title: 'Organisation d\'entreprise',
+      title: "Organisation d'entreprise",
       description: 'Structuration des départements, clarification des rôles et responsabilités, optimisation des flux de travail.',
     },
     {
       title: 'Optimisation des processus',
-      description: 'Identification des goulots d\'étranglement, conception et implémentation de processus fluides, création de procédures standardisées.',
+      description: "Identification des goulots d'étranglement, conception et implémentation de processus fluides, création de procédures standardisées.",
     },
     {
       title: 'Tableaux de bord décisionnels',
-      description: 'Développement de KPIs pertinents, mise en place d\'outils de Business Intelligence, création de tableaux de bord en temps réel.',
+      description: 'Développement de KPIs pertinents, mise en place d’outils de Business Intelligence, création de tableaux de bord en temps réel.',
     },
     {
       title: 'Transformation digitale',
@@ -37,7 +37,7 @@ export const HomePage = () => {
     },
     {
       title: 'Management opérationnel',
-      description: 'Leadership transversal, conduite du changement, accompagnement des équipes vers l\'excellence opérationnelle.',
+      description: 'Leadership transversal, conduite du changement, accompagnement des équipes vers l’excellence opérationnelle.',
     },
   ];
 
@@ -63,13 +63,14 @@ export const HomePage = () => {
             Experte en Organisation, Process et Productivité | Votre COO Externe
           </motion.p>
           <motion.div
+            className="flex flex-col sm:flex-row justify-center gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             <Link
               to="/contact"
-              className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-8 rounded-md mr-4 transition-colors"
+              className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-8 rounded-md transition-colors"
             >
               Me contacter
             </Link>
