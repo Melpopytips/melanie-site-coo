@@ -48,15 +48,17 @@ export const ContactForm = () => {
 
       // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
       try {
+        console.log('Tentative d\'insertion dans Supabase…', data);
         await supabase.from('contacts').insert({
-          nom_contact: data.name.split(' ')[0] || '',             // prénom estimé
-          prenom_contact: data.name.split(' ').slice(1).join(' '), // nom estimé
+          nom_contact: data.name.split(' ')[0] || '',
+          prenom_contact: data.name.split(' ').slice(1).join(' '),
           email_contact: data.email,
           telephone_contact: data.phone || null,
           company_contact: data.company || null,
           message_contact: data.message,
-          lecture_message_contact: false, // non lu par défaut
-         });
+          lecture_message_contact: false,
+        });
+
 
       } catch (supabaseError) {
         console.error('Erreur Supabase :', supabaseError);
