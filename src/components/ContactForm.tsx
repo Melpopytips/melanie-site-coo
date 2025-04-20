@@ -42,24 +42,27 @@ export const ContactForm = () => {
 
     // Appel à Supabase (non bloquant)
     try {
-      const { error } = await supabase.from("CONTACTS").insert({
-        email_contact: data.email,
-        telephone_contact: data.phone,
-        nom_contact: data.name, // ou découper si tu as prénom aussi
-        prenom_contact: "", // si tu veux le gérer ensuite
-        company_contact: data.company,
-        message_contact: data.message,
-        lecture_message_contact: false,
-      });
+      const supabaseInsert = await supabase.from('CONTACTS').insert([
+        {
+          nom_contact: data.name,
+          prenom_contact: '', // ou extrais prénom si tu veux séparer plus tard
+          email_contact: data.email,
+          telephone_contact: data.phone,
+          company_contact: data.company,
+          message_contact: data.message,
+          lecture_message_contact: false, // valeur par défaut
+        },
+      ]);
 
-      if (error) {
-        console.error("Erreur Supabase :", error.message);
+      if (supabaseInsert.error) {
+        console.error("❌ Erreur Supabase:", supabaseInsert.error);
       } else {
-        console.log("✅ Contact ajouté à Supabase !");
+        console.log("✅ Contact ajouté dans Supabase");
       }
-    } catch (supabaseErr) {
-      console.error("❌ Erreur de connexion Supabase :", supabaseErr);
+    } catch (error) {
+      console.error("❌ Erreur lors de l’ajout Supabase:", error);
     }
+
 
     setIsSubmitted(true);
     reset();
