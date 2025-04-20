@@ -57,8 +57,10 @@ export const ContactForm = () => {
           company_contact: data.company || null,
           message_contact: data.message,
           lecture_message_contact: false,
-        });
-
+            });
+      if (error) {
+         console.error('Erreur lors de l’insertion Supabase :', error.message);
+           }
 
       } catch (supabaseError) {
         console.error('Erreur Supabase :', supabaseError);
