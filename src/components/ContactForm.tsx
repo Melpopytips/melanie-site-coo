@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabaseClient'; // ✅ C’est suffisant
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL!,
@@ -29,50 +29,48 @@ export const ContactForm = () => {
   } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
-  setIsSubmitting(true);
-  setError(null);
+    setIsSubmitting(true);
+    setError(null);
 
-  try {
-    // Envoi du mail
-    await fetch("https://mail-server-melanie.onrender.com/send", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-
-    // Appel à Supabase (non bloquant)
     try {
-      const supabaseInsert = await supabase.from('CONTACTS').insert([
-        {
-          nom_contact: data.name,
-          prenom_contact: '', // ou extrais prénom si tu veux séparer plus tard
-          email_contact: data.email,
-          telephone_contact: data.phone,
-          company_contact: data.company,
-          message_contact: data.message,
-          lecture_message_contact: false, // valeur par défaut
+      // Envoi du mail
+      const response = await fetch("https://mail-server-melanie.onrender.com/send", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ]);
+        body: JSON.stringify(data),
+      });
 
-      if (supabaseInsert.error) {
-        console.error("❌ Erreur Supabase:", supabaseInsert.error);
-      } else {
-        console.log("✅ Contact ajouté dans Supabase");
+      if (!response.ok) {
+        throw new Error("Échec de l'envoi du message");
       }
-    } catch (error) {
-      console.error("❌ Erreur lors de l’ajout Supabase:", error);
+
+      // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
+      try {
+        await supabase.from('contacts').insert({
+          name: data.name,
+          email: data.email,
+          phone: data.phone || null,
+          company: data.company || null,
+          message: data.message,
+        });
+      } catch (supabaseError) {
+        console.error('Erreur Supabase :', supabaseError);
+      }
+
+      setIsSubmitted(true);
+      reset();
+
+      setTimeout(() => {
+        setIsSubmitted(false);
+      }, 5000);
+    } catch (err) {
+      setError("Une erreur est survenue lors de l'envoi du message. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-
-    setIsSubmitted(true);
-    reset();
-    setTimeout(() => setIsSubmitted(false), 5000);
-  } catch (err) {
-    setError("Une erreur est survenue lors de l'envoi du message. Veuillez réessayer.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
     <motion.div
