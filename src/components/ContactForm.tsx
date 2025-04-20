@@ -43,15 +43,25 @@ export const ContactForm = () => {
 
       // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
       try {
-        await supabase.from('CONTACTS').insert({
-          name: data.name,
-          email: data.email,
-          phone: data.phone || null,
-          company: data.company || null,
-          message: data.message,
-        });
-      } catch (supabaseError) {
-        console.error('Erreur Supabase :', supabaseError);
+        const { error: supabaseError, data: inserted } = await supabase.from('CONTACTS').insert([
+          {
+            nom_contact: data.name,
+            prenom_contact: '', // si besoin, ou à séparer plus tard
+            email_contact: data.email,
+            telephone_contact: data.phone || null,
+            company_contact: data.company || null,
+            message_contact: data.message,
+            lecture_message_contact: false,
+          }
+        ]);
+
+        if (supabaseError) {
+            console.error("❌ Erreur Supabase :", supabaseError.message);
+        } else {
+            console.log("✅ Contact ajouté avec succès dans Supabase", inserted);
+        }
+      } catch (error) {
+        console.error("❌ Erreur d’appel Supabase :", error);
       }
 
       setIsSubmitted(true);
