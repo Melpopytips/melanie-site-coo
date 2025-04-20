@@ -43,7 +43,7 @@ export const ContactForm = () => {
 
       // Enregistrement dans Supabase (sans bloquer l'utilisateur si erreur)
       try {
-        await supabase.from('contacts').insert({
+        await supabase.from('CONTACTS').insert({
           name: data.name,
           email: data.email,
           phone: data.phone || null,
