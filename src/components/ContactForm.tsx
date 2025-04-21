@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -16,7 +16,7 @@ export const ContactForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
 
   const {
     register,
@@ -29,58 +29,51 @@ export const ContactForm = () => {
     setIsSubmitting(true);
     setError(null);
 
-    if (!captchaToken) {
-      setError("Veuillez valider le reCAPTCHA avant d'envoyer.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const response = await fetch("https://mail-server-melanie.onrender.com/send", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          captchaToken,
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Échec de l'envoi du message");
+      // Exécute le reCAPTCHA invisible
+      const token = await recaptchaRef.current?.executeAsync();
+      if (!token) {
+        setError("Erreur de validation reCAPTCHA. Veuillez réessayer.");
+        setIsSubmitting(false);
+        return;
       }
 
-      // Insertion dans Supabase (non bloquante)
+      const response = await fetch("https://mail-server-melanie.onrender.com/send", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, captchaToken: token }),
+      });
+
+      if (!response.ok) throw new Error("Échec de l'envoi du message");
+
       try {
-        const { error: supabaseError, data: inserted } = await supabase.from('CONTACTS').insert([
-          {
-            nom_contact: data.name,
-            prenom_contact: '',
-            email_contact: data.email,
-            telephone_contact: data.phone || null,
-            company_contact: data.company || null,
-            message_contact: data.message,
-            lecture_message_contact: false,
-          }
-        ]);
+        const { error: supabaseError } = await supabase.from('CONTACTS').insert([{
+          nom_contact: data.name,
+          prenom_contact: '',
+          email_contact: data.email,
+          telephone_contact: data.phone || null,
+          company_contact: data.company || null,
+          message_contact: data.message,
+          lecture_message_contact: false,
+        }]);
 
         if (supabaseError) {
           console.error("❌ Erreur Supabase :", supabaseError.message);
         } else {
-          console.log("✅ Contact ajouté avec succès dans Supabase", inserted);
+          console.log("✅ Contact ajouté avec succès dans Supabase");
         }
-      } catch (error) {
-        console.error("❌ Erreur d’appel Supabase :", error);
+      } catch (supabaseErr) {
+        console.error("❌ Erreur Supabase catch :", supabaseErr);
       }
 
       setIsSubmitted(true);
       reset();
       setTimeout(() => setIsSubmitted(false), 5000);
     } catch (err) {
-      setError("Une erreur est survenue lors de l'envoi du message. Veuillez réessayer.");
+      setError("Une erreur est survenue. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
+      recaptchaRef.current?.reset(); // reset le token
     }
   };
 
@@ -93,11 +86,7 @@ export const ContactForm = () => {
       transition={{ duration: 0.5 }}
     >
       {isSubmitted ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-8"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
           <div className="text-5xl mb-4">✓</div>
           <h3 className="text-2xl font-bold text-secondary-700 mb-2">Merci pour votre message!</h3>
           <p className="text-gray-600">Je vous recontacterai très rapidement.</p>
@@ -105,9 +94,7 @@ export const ContactForm = () => {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-6">
-            <label htmlFor="name" className="block text-secondary-700 font-medium mb-2">
-              Nom complet *
-            </label>
+            <label htmlFor="name" className="block text-secondary-700 font-medium mb-2">Nom complet *</label>
             <input
               type="text"
               id="name"
@@ -119,9 +106,7 @@ export const ContactForm = () => {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="company" className="block text-secondary-700 font-medium mb-2">
-              Entreprise
-            </label>
+            <label htmlFor="company" className="block text-secondary-700 font-medium mb-2">Entreprise</label>
             <input
               type="text"
               id="company"
@@ -132,9 +117,7 @@ export const ContactForm = () => {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="email" className="block text-secondary-700 font-medium mb-2">
-              Email *
-            </label>
+            <label htmlFor="email" className="block text-secondary-700 font-medium mb-2">Email *</label>
             <input
               type="email"
               id="email"
@@ -152,9 +135,7 @@ export const ContactForm = () => {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="phone" className="block text-secondary-700 font-medium mb-2">
-              Téléphone
-            </label>
+            <label htmlFor="phone" className="block text-secondary-700 font-medium mb-2">Téléphone</label>
             <input
               type="tel"
               id="phone"
@@ -165,9 +146,7 @@ export const ContactForm = () => {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="message" className="block text-secondary-700 font-medium mb-2">
-              Votre message *
-            </label>
+            <label htmlFor="message" className="block text-secondary-700 font-medium mb-2">Votre message *</label>
             <textarea
               id="message"
               rows={5}
@@ -179,10 +158,9 @@ export const ContactForm = () => {
           </div>
 
           <ReCAPTCHA
+            ref={recaptchaRef}
             sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY!}
             size="invisible"
-            badge="bottomright"
-            onChange={(token) => setCaptchaToken(token)}
           />
 
           {error && (
