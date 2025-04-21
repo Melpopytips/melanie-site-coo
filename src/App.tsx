@@ -10,6 +10,7 @@ import { ExperiencePage } from './pages/ExperiencePage';
 import { WhyMePage } from './pages/WhyMePage';
 import { ContactPage } from './pages/ContactPage';
 import { AnimatePresence } from 'framer-motion';
+import { ScrollToTopButton } from './components/ScrollToTopButton'; // ajoute cette ligne
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             </Routes>
           </AnimatePresence>
         </main>
+        <ScrollToTopButton /> {/* 👈 AJOUT ICI */}
         <Footer />
       </div>
     </Router>
